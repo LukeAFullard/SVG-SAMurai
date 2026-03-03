@@ -1,13 +1,11 @@
 import streamlit as st
 from PIL import Image
 import numpy as np
-import io
-import time
 from streamlit_image_coordinates import streamlit_image_coordinates
 
 from src.model import compute_image_embedding, predict_mask
 from src.vectorizer import mask_to_svg_path
-from src.xml_manager import SVG_NS, NSMAP, load_image
+from src.xml_manager import SVG_NS, load_image
 
 st.set_page_config(page_title="SVG-SAMurai", layout="wide", page_icon="🗡️")
 
