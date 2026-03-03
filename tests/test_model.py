@@ -28,10 +28,20 @@ def mock_sam_components():
         mock_processor_output.pixel_values = torch.zeros((1, 3, 100, 100))
         mock_processor_output.input_points = torch.zeros((1, 1, 2))
         mock_processor_output.input_labels = torch.zeros((1, 1))
+        # Provide dictionary access to mimic processor output dictionary
+        mock_processor_output.__getitem__.side_effect = lambda key: {"original_sizes": torch.tensor([[100, 100]]), "reshaped_input_sizes": torch.tensor([[100, 100]])}[key]
 
         # Allow processor to act like a callable and return the configured output
         mock_processor.return_value = mock_processor_output
         mock_processor_output.to.return_value = mock_processor_output
+
+        # Mock post_process_masks
+        mock_post_process = MagicMock()
+        # post_process_masks returns a list of tensors
+        # Use a real tensor to avoid mock chain confusion with .numpy() and type checking
+        mock_mask_tensor = torch.ones((1, 1, 100, 100), dtype=torch.float32)
+        mock_post_process.return_value = [mock_mask_tensor]
+        mock_processor.image_processor.post_process_masks = mock_post_process
 
         # Set the mocked load function to return these objects
         mock_load.return_value = (mock_model, mock_processor, mock_device)
