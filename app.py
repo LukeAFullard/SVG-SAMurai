@@ -1,7 +1,6 @@
 import streamlit as st
 from PIL import Image
 import numpy as np
-import io
 import time
 from streamlit_image_coordinates import streamlit_image_coordinates
 
