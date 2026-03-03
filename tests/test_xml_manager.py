@@ -1,6 +1,9 @@
 import pytest
-from src.xml_manager import create_base_svg, add_path_to_svg, SVG_NS, NSMAP
+from src.xml_manager import create_base_svg, add_path_to_svg, parse_svg_to_image, SVG_NS, NSMAP
 from lxml import etree
+from unittest.mock import patch, MagicMock
+import io
+from PIL import Image
 
 def test_create_base_svg():
     svg_str = create_base_svg(800, 600)
@@ -40,3 +43,30 @@ def test_add_path_invalid_xml():
 
     # Should gracefully return the original string if parsing fails
     assert result == invalid_xml
+
+def test_parse_svg_to_image():
+    """
+    Verifies that parse_svg_to_image correctly converts SVG bytes
+    to a PIL Image using cairosvg and PIL.Image.open.
+    """
+    svg_bytes = b"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"100\" height=\"100\"></svg>"
+    mock_png_bytes = b"fake png data"
+
+    with patch("cairosvg.svg2png", return_value=mock_png_bytes) as mock_svg2png:
+        with patch("PIL.Image.open") as mock_image_open:
+            mock_image = MagicMock(spec=Image.Image)
+            mock_image_open.return_value = mock_image
+
+            result = parse_svg_to_image(svg_bytes)
+
+            # Verify cairosvg.svg2png was called with the correct bytes
+            mock_svg2png.assert_called_once_with(bytestring=svg_bytes)
+
+            # Verify Image.open was called with a BytesIO wrapping the PNG bytes
+            mock_image_open.assert_called_once()
+            args, _ = mock_image_open.call_args
+            assert isinstance(args[0], io.BytesIO)
+            assert args[0].getvalue() == mock_png_bytes
+
+            # Verify the result is the expected image object
+            assert result == mock_image
