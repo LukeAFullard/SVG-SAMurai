@@ -1,4 +1,3 @@
-import os
 from lxml import etree
 import cairosvg
 import io
@@ -8,12 +7,26 @@ from PIL import Image
 SVG_NS = "http://www.w3.org/2000/svg"
 NSMAP = {None: SVG_NS}
 
+
 def create_base_svg(width: int, height: int) -> str:
     """Creates a basic empty SVG string with specified dimensions."""
-    root = etree.Element("svg", width=str(width), height=str(height), viewBox=f"0 0 {width} {height}", nsmap=NSMAP)
+    root = etree.Element(
+        "svg",
+        width=str(width),
+        height=str(height),
+        viewBox=f"0 0 {width} {height}",
+        nsmap=NSMAP,
+    )
     return etree.tostring(root, pretty_print=True, encoding="unicode")
 
-def add_path_to_svg(svg_str: str, path_d: str, path_id: str, fill_color: str = "#FF0000", opacity: float = 0.5) -> str:
+
+def add_path_to_svg(
+    svg_str: str,
+    path_d: str,
+    path_id: str,
+    fill_color: str = "#FF0000",
+    opacity: float = 0.5,
+) -> str:
     """
     Injects an SVG `<path>` into an existing SVG string within a `<g>` group using lxml.
     """
@@ -23,7 +36,9 @@ def add_path_to_svg(svg_str: str, path_d: str, path_id: str, fill_color: str = "
     try:
         # Provide a parser that handles basic errors and mitigates XXE injection
         parser = etree.XMLParser(recover=True, resolve_entities=False, no_network=True)
-        root = etree.fromstring(svg_str.encode('utf-8', errors='replace'), parser=parser)
+        root = etree.fromstring(
+            svg_str.encode("utf-8", errors="replace"), parser=parser
+        )
         if root is None:
             return svg_str
     except Exception:
@@ -42,26 +57,32 @@ def add_path_to_svg(svg_str: str, path_d: str, path_id: str, fill_color: str = "
     new_nsmap = {None: ns} if ns else None
 
     # Create the <g id="path_id">
-    group = etree.SubElement(root, f"{{{ns}}}g" if ns else "g", id=path_id, nsmap=new_nsmap)
+    group = etree.SubElement(
+        root, f"{{{ns}}}g" if ns else "g", id=path_id, nsmap=new_nsmap
+    )
 
     # Create the <path>
     # Using fill-rule="evenodd" is important when combining outer boundaries and inner holes
-    path = etree.SubElement(
+    etree.SubElement(
         group,
         f"{{{ns}}}path" if ns else "path",
         d=path_d,
         fill=fill_color,
         opacity=str(opacity),
-        attrib={"fill-rule": "evenodd"} # Handles holes properly
+        attrib={"fill-rule": "evenodd"},  # Handles holes properly
     )
 
     return etree.tostring(root, pretty_print=True, encoding="unicode")
 
+
 def parse_svg_to_image(svg_bytes: bytes) -> Image.Image:
     """Converts uploaded SVG file bytes into a PIL Image."""
     # Pass url_fetcher to block network and local file access from within SVG
-    png_bytes = cairosvg.svg2png(bytestring=svg_bytes, url_fetcher=lambda *args, **kwargs: b"")
+    png_bytes = cairosvg.svg2png(
+        bytestring=svg_bytes, url_fetcher=lambda *args, **kwargs: b""
+    )
     return Image.open(io.BytesIO(png_bytes))
+
 
 def load_image(uploaded_file) -> Image.Image:
     """Loads an uploaded image (Raster or Vector) and returns a PIL Image."""

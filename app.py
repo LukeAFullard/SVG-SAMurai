@@ -5,7 +5,7 @@ from streamlit_image_coordinates import streamlit_image_coordinates
 
 from src.model import compute_image_embedding, predict_mask
 from src.vectorizer import mask_to_svg_path
-from src.xml_manager import SVG_NS, NSMAP, load_image, create_base_svg
+from src.xml_manager import load_image, create_base_svg
 
 st.set_page_config(page_title="SVG-SAMurai", layout="wide", page_icon="🗡️")
 
@@ -26,14 +26,21 @@ if "original_svg" not in st.session_state:
     st.session_state.original_svg = None
 
 st.title("SVG-SAMurai 🗡️")
-st.markdown("Transform raster and vector images into segmented SVG paths using the **Segment Anything Model (SAM)**.")
+st.markdown(
+    "Transform raster and vector images into segmented SVG paths using the **Segment Anything Model (SAM)**."
+)
 
 # File uploader
-uploaded_file = st.file_uploader("Upload an Image (PNG, JPG, SVG)", type=["png", "jpg", "jpeg", "svg"])
+uploaded_file = st.file_uploader(
+    "Upload an Image (PNG, JPG, SVG)", type=["png", "jpg", "jpeg", "svg"]
+)
 
 if uploaded_file is not None:
     # Reset state if a new file is uploaded
-    if "last_uploaded" not in st.session_state or st.session_state.last_uploaded != uploaded_file.name:
+    if (
+        "last_uploaded" not in st.session_state
+        or st.session_state.last_uploaded != uploaded_file.name
+    ):
         st.session_state.last_uploaded = uploaded_file.name
         st.session_state.image = None
         st.session_state.image_embedding = None
@@ -51,7 +58,9 @@ if uploaded_file is not None:
 
             # If the original file was an SVG, save its string representation
             if uploaded_file.type == "image/svg+xml":
-                st.session_state.original_svg = uploaded_file.getvalue().decode('utf-8', errors='replace')
+                st.session_state.original_svg = uploaded_file.getvalue().decode(
+                    "utf-8", errors="replace"
+                )
             else:
                 # Create a blank SVG canvas with the original raster image dimensions
                 width, height = image.size
@@ -71,12 +80,21 @@ if uploaded_file is not None:
         display_image = st.session_state.image.copy()
         if st.session_state.current_mask is not None:
             # Create a semi-transparent blue overlay for the current mask
-            overlay = np.zeros((*st.session_state.current_mask.shape, 4), dtype=np.uint8)
-            overlay[st.session_state.current_mask > 0] = [0, 0, 255, 128] # Blue, 50% opacity
+            overlay = np.zeros(
+                (*st.session_state.current_mask.shape, 4), dtype=np.uint8
+            )
+            overlay[st.session_state.current_mask > 0] = [
+                0,
+                0,
+                255,
+                128,
+            ]  # Blue, 50% opacity
             overlay_image = Image.fromarray(overlay, mode="RGBA")
             display_image = display_image.convert("RGBA")
             display_image.paste(overlay_image, (0, 0), overlay_image)
-            display_image = display_image.convert("RGB") # Convert back to RGB for display
+            display_image = display_image.convert(
+                "RGB"
+            )  # Convert back to RGB for display
 
         # Show the image using streamlit-image-coordinates
         # Note: we need to handle scaling if the image is wider than the container
@@ -91,7 +109,11 @@ if uploaded_file is not None:
 
             # Determine if it's a positive or negative prompt
             # For simplicity, let's say left click is positive, and we can add a toggle for negative
-            is_positive = st.sidebar.checkbox("Next Click is Negative Prompt (Exclude)", value=False, key="neg_prompt_toggle")
+            is_positive = st.sidebar.checkbox(
+                "Next Click is Negative Prompt (Exclude)",
+                value=False,
+                key="neg_prompt_toggle",
+            )
             label = 0 if is_positive else 1
 
             # Check if this is a new click (prevent reruns from adding the same point repeatedly)
@@ -106,7 +128,7 @@ if uploaded_file is not None:
                         st.session_state.image,
                         st.session_state.image_embedding,
                         st.session_state.points,
-                        st.session_state.labels
+                        st.session_state.labels,
                     )
                     st.session_state.current_mask = mask
                 st.rerun()
@@ -124,7 +146,7 @@ if uploaded_file is not None:
                             st.session_state.image,
                             st.session_state.image_embedding,
                             st.session_state.points,
-                            st.session_state.labels
+                            st.session_state.labels,
                         )
                         st.session_state.current_mask = mask
                     else:
@@ -142,12 +164,24 @@ if uploaded_file is not None:
         st.subheader("Segment Management")
 
         segment_name = st.text_input("Segment Name", placeholder="e.g., car_body")
-        epsilon_factor = st.slider("Vectorization Simplification (epsilon)", min_value=0.001, max_value=0.05, value=0.005, step=0.001, format="%.3f")
+        epsilon_factor = st.slider(
+            "Vectorization Simplification (epsilon)",
+            min_value=0.001,
+            max_value=0.05,
+            value=0.005,
+            step=0.001,
+            format="%.3f",
+        )
 
-        if st.button("Save Segment to SVG", disabled=st.session_state.current_mask is None or not segment_name):
+        if st.button(
+            "Save Segment to SVG",
+            disabled=st.session_state.current_mask is None or not segment_name,
+        ):
             with st.spinner("Vectorizing..."):
                 # 1. Convert mask to SVG path
-                path_d = mask_to_svg_path(st.session_state.current_mask, epsilon_factor=epsilon_factor)
+                path_d = mask_to_svg_path(
+                    st.session_state.current_mask, epsilon_factor=epsilon_factor
+                )
 
                 # 2. Add to session state segments dictionary
                 st.session_state.segments[segment_name] = path_d
@@ -161,7 +195,7 @@ if uploaded_file is not None:
                         path_d,
                         segment_name,
                         fill_color="#FF0000",
-                        opacity=0.5
+                        opacity=0.5,
                     )
 
                     # Clear current selection for the next segment
@@ -185,5 +219,5 @@ if uploaded_file is not None:
                 label="Download Final SVG",
                 data=st.session_state.original_svg,
                 file_name="segmented_output.svg",
-                mime="image/svg+xml"
+                mime="image/svg+xml",
             )

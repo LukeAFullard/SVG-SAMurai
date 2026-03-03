@@ -1,8 +1,8 @@
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from streamlit.testing.v1 import AppTest
 from PIL import Image
 import numpy as np
+
 
 def test_app_title_and_initial_state():
     """Test that the app initializes correctly with expected title and empty state."""
@@ -10,7 +10,10 @@ def test_app_title_and_initial_state():
 
     assert not at.exception
     assert at.title[0].value == "SVG-SAMurai 🗡️"
-    assert "Transform raster and vector images into segmented SVG paths" in at.markdown[0].value
+    assert (
+        "Transform raster and vector images into segmented SVG paths"
+        in at.markdown[0].value
+    )
 
     # Check session state initialization
     assert at.session_state.image is None
@@ -21,12 +24,13 @@ def test_app_title_and_initial_state():
     assert at.session_state.segments == {}
     assert at.session_state.original_svg is None
 
-@patch('app.load_image')
-@patch('app.compute_image_embedding')
+
+@patch("app.load_image")
+@patch("app.compute_image_embedding")
 def test_app_file_upload(mock_compute_embedding, mock_load_image):
     """Test the file upload and embedding computation."""
     # Create a dummy image
-    dummy_image = Image.new('RGB', (100, 100), color='red')
+    dummy_image = Image.new("RGB", (100, 100), color="red")
     mock_load_image.return_value = dummy_image
     mock_compute_embedding.return_value = "dummy_embedding"
 
@@ -39,7 +43,7 @@ def test_app_file_upload(mock_compute_embedding, mock_load_image):
             self.type = type
 
     img_byte_arr = io.BytesIO()
-    dummy_image.save(img_byte_arr, format='PNG')
+    dummy_image.save(img_byte_arr, format="PNG")
     img_byte_arr = img_byte_arr.getvalue()
 
     # Mocking file_uploader is a reliable way to simulate an uploaded file in older Streamlit versions.
@@ -53,20 +57,24 @@ def test_app_file_upload(mock_compute_embedding, mock_load_image):
 
         # Verify the session state changed
         assert at.session_state.image is not None
-        assert '<svg width="100" height="100" viewBox="0 0 100 100"' in at.session_state.original_svg
+        assert 'width="100"' in at.session_state.original_svg
+        assert 'height="100"' in at.session_state.original_svg
+        assert 'viewBox="0 0 100 100"' in at.session_state.original_svg
 
         # Verify success message
         assert at.success[0].value == "Image embedded successfully!"
 
 
-@patch('app.load_image')
-@patch('app.compute_image_embedding')
-@patch('app.predict_mask')
-@patch('app.streamlit_image_coordinates')
-def test_app_interactive_segmentation(mock_sic, mock_predict_mask, mock_compute_embedding, mock_load_image):
+@patch("app.load_image")
+@patch("app.compute_image_embedding")
+@patch("app.predict_mask")
+@patch("app.streamlit_image_coordinates")
+def test_app_interactive_segmentation(
+    mock_sic, mock_predict_mask, mock_compute_embedding, mock_load_image
+):
     """Test clicking on the image and generating a mask."""
     # Set up mocks
-    dummy_image = Image.new('RGB', (100, 100), color='red')
+    dummy_image = Image.new("RGB", (100, 100), color="red")
     mock_load_image.return_value = dummy_image
     mock_compute_embedding.return_value = "dummy_embedding"
 
@@ -76,8 +84,9 @@ def test_app_interactive_segmentation(mock_sic, mock_predict_mask, mock_compute_
     mock_predict_mask.return_value = dummy_mask
 
     import io
+
     img_byte_arr = io.BytesIO()
-    dummy_image.save(img_byte_arr, format='PNG')
+    dummy_image.save(img_byte_arr, format="PNG")
 
     class MockUploadedFile(io.BytesIO):
         def __init__(self, name, type, content):
@@ -105,15 +114,23 @@ def test_app_interactive_segmentation(mock_sic, mock_predict_mask, mock_compute_
         assert at.session_state.points == [[50, 50]]
         assert at.session_state.labels == [1]
 
-@patch('app.load_image')
-@patch('app.compute_image_embedding')
-@patch('app.predict_mask')
-@patch('app.mask_to_svg_path')
-@patch('src.xml_manager.add_path_to_svg')
-@patch('app.streamlit_image_coordinates')
-def test_app_save_segment(mock_sic, mock_add_path, mock_mask_to_svg, mock_predict_mask, mock_compute_embedding, mock_load_image):
+
+@patch("app.load_image")
+@patch("app.compute_image_embedding")
+@patch("app.predict_mask")
+@patch("app.mask_to_svg_path")
+@patch("src.xml_manager.add_path_to_svg")
+@patch("app.streamlit_image_coordinates")
+def test_app_save_segment(
+    mock_sic,
+    mock_add_path,
+    mock_mask_to_svg,
+    mock_predict_mask,
+    mock_compute_embedding,
+    mock_load_image,
+):
     """Test saving a predicted segment."""
-    dummy_image = Image.new('RGB', (100, 100), color='red')
+    dummy_image = Image.new("RGB", (100, 100), color="red")
     mock_load_image.return_value = dummy_image
     mock_compute_embedding.return_value = "dummy_embedding"
 
@@ -121,11 +138,14 @@ def test_app_save_segment(mock_sic, mock_add_path, mock_mask_to_svg, mock_predic
     mock_predict_mask.return_value = dummy_mask
 
     mock_mask_to_svg.return_value = "M 25 25 L 75 25 L 75 75 L 25 75 Z"
-    mock_add_path.return_value = "<svg><path d='M 25 25 L 75 25 L 75 75 L 25 75 Z'/></svg>"
+    mock_add_path.return_value = (
+        "<svg><path d='M 25 25 L 75 25 L 75 75 L 25 75 Z'/></svg>"
+    )
 
     import io
+
     img_byte_arr = io.BytesIO()
-    dummy_image.save(img_byte_arr, format='PNG')
+    dummy_image.save(img_byte_arr, format="PNG")
 
     class MockUploadedFile(io.BytesIO):
         def __init__(self, name, type, content):
@@ -141,6 +161,7 @@ def test_app_save_segment(mock_sic, mock_add_path, mock_mask_to_svg, mock_predic
 
         # Simulate click behavior directly and patch component since we know it operates correctly from prior test
         mock_sic.return_value = {"x": 50, "y": 50}
+        at.session_state.current_mask = dummy_mask
         at.run()
 
         # Set segment name

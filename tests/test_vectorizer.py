@@ -2,11 +2,22 @@ import numpy as np
 import cv2
 from src.vectorizer import mask_to_svg_path
 
+import pytest
+
+
 def test_mask_to_svg_path_empty_mask():
     # Test with an empty mask (no contours)
     mask = np.zeros((100, 100), dtype=np.uint8)
     path_str = mask_to_svg_path(mask)
     assert path_str == "", "Empty mask should result in an empty string"
+
+
+def test_mask_to_svg_path_invalid_mask():
+    with pytest.raises(ValueError, match="Mask must be a 2D numpy array."):
+        mask_to_svg_path(None)
+    with pytest.raises(ValueError, match="Mask must be a 2D numpy array."):
+        mask_to_svg_path(np.zeros((100, 100, 3), dtype=np.uint8))
+
 
 def test_mask_to_svg_path_simple_square():
     # Test with a simple square mask
@@ -20,10 +31,11 @@ def test_mask_to_svg_path_simple_square():
     assert path_str.startswith("M")
     assert "Z" in path_str
     assert path_str.count("M") == 1
-    assert path_str.count("L") == 3 # A square has 4 points total
+    assert path_str.count("L") == 3  # A square has 4 points total
 
     # The first point should be one of the corners (e.g., M 25,25)
     assert "25" in path_str or "74" in path_str
+
 
 def test_mask_to_svg_path_with_hole():
     # Test a square with a hole (donut)
@@ -40,6 +52,7 @@ def test_mask_to_svg_path_with_hole():
     assert path_str.count("M") == 2
     assert path_str.count("Z") == 2
 
+
 def test_mask_to_svg_path_simplification():
     # Create a noisy/jagged circle
     mask = np.zeros((200, 200), dtype=np.uint8)
@@ -47,7 +60,7 @@ def test_mask_to_svg_path_simplification():
 
     # Add some noise to the boundary
     for i in range(10):
-        mask[100+int(48*np.sin(i)), 100+int(48*np.cos(i))] = 0
+        mask[100 + int(48 * np.sin(i)), 100 + int(48 * np.cos(i))] = 0
 
     # Low epsilon (high detail)
     detailed_path = mask_to_svg_path(mask, epsilon_factor=0.0001)
@@ -58,17 +71,22 @@ def test_mask_to_svg_path_simplification():
     # The simplified path should have fewer points (fewer 'L' commands)
     assert detailed_path.count("L") > simplified_path.count("L")
 
+
 def test_mask_to_svg_path_contours_none(mocker):
     # Test when cv2.findContours returns None for contours
-    mocker.patch('cv2.findContours', return_value=(None, None))
+    mocker.patch("cv2.findContours", return_value=(None, None))
     mask = np.zeros((100, 100), dtype=np.uint8)
 
     path_str = mask_to_svg_path(mask)
     assert path_str == "", "Should return empty string when contours is None"
 
+
 def test_mask_to_svg_path_hierarchy_none(mocker):
     # Test when cv2.findContours returns valid contours but None for hierarchy
-    mocker.patch('cv2.findContours', return_value=([np.array([[[0, 0]], [[0, 10]], [[10, 10]]])], None))
+    mocker.patch(
+        "cv2.findContours",
+        return_value=([np.array([[[0, 0]], [[0, 10]], [[10, 10]]])], None),
+    )
     mask = np.zeros((100, 100), dtype=np.uint8)
 
     path_str = mask_to_svg_path(mask)

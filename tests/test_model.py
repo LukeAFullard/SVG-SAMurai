@@ -5,9 +5,10 @@ from PIL import Image
 import torch
 from src.model import compute_image_embedding, predict_mask
 
+
 @pytest.fixture
 def mock_sam_components():
-    with patch('src.model.load_sam_model') as mock_load:
+    with patch("src.model.load_sam_model") as mock_load:
         # Create mock model and processor
         mock_model = MagicMock()
         mock_processor = MagicMock()
@@ -29,7 +30,10 @@ def mock_sam_components():
         mock_processor_output.input_points = torch.zeros((1, 1, 2))
         mock_processor_output.input_labels = torch.zeros((1, 1))
         # Provide dictionary access to mimic processor output dictionary
-        mock_processor_output.__getitem__.side_effect = lambda key: {"original_sizes": torch.tensor([[100, 100]]), "reshaped_input_sizes": torch.tensor([[100, 100]])}[key]
+        mock_processor_output.__getitem__.side_effect = lambda key: {
+            "original_sizes": torch.tensor([[100, 100]]),
+            "reshaped_input_sizes": torch.tensor([[100, 100]]),
+        }[key]
 
         # Allow processor to act like a callable and return the configured output
         mock_processor.return_value = mock_processor_output
@@ -48,11 +52,12 @@ def mock_sam_components():
 
         yield mock_load, mock_model, mock_processor
 
+
 def test_compute_image_embedding(mock_sam_components):
     mock_load, mock_model, mock_processor = mock_sam_components
 
     # Create a dummy image
-    image = Image.new('RGB', (100, 100), color='white')
+    image = Image.new("RGB", (100, 100), color="white")
 
     # Run the function
     embeddings = compute_image_embedding(image)
@@ -65,11 +70,12 @@ def test_compute_image_embedding(mock_sam_components):
     # Check that the return value matches what we mocked
     assert embeddings.shape == (1, 256, 64, 64)
 
+
 def test_predict_mask(mock_sam_components):
     mock_load, mock_model, mock_processor = mock_sam_components
 
     # Dummy inputs
-    image = Image.new('RGB', (100, 100), color='white')
+    image = Image.new("RGB", (100, 100), color="white")
     image_embeddings = torch.zeros((1, 256, 64, 64))
     input_points = [[50, 50]]
     input_labels = [1]
@@ -92,7 +98,7 @@ def test_predict_mask(mock_sam_components):
     # The mask should be a numpy array of uint8
     assert isinstance(mask, np.ndarray)
     assert mask.dtype == np.uint8
-    assert mask.shape == (100, 100) # Since squeeze() removes 1-dims
+    assert mask.shape == (100, 100)  # Since squeeze() removes 1-dims
 
     # Since we mocked the output to be all ones, the scaled mask should be all 255s
     assert np.all(mask == 255)
