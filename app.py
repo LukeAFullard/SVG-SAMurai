@@ -9,9 +9,6 @@ from src.model import compute_image_embedding, predict_mask
 from src.vectorizer import mask_to_svg_path
 from src.xml_manager import SVG_NS, NSMAP, load_image
 
-# Constants for caching and visual elements
-MAX_IMAGE_WIDTH = 800
-
 st.set_page_config(page_title="SVG-SAMurai", layout="wide", page_icon="🗡️")
 
 # Session State Initialization
