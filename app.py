@@ -157,26 +157,17 @@ if uploaded_file is not None:
                 # 2. Add to session state segments dictionary
                 st.session_state.segments[segment_name] = path_d
 
-                # 3. Inject the path into the working SVG string using lxml
-                from lxml import etree
+                # 3. Inject the path into the working SVG string
+                from src.xml_manager import add_path_to_svg
 
                 try:
-                    # Parse the original SVG string
-                    root = etree.fromstring(st.session_state.original_svg.encode('utf-8'))
-
-                    # Create the new group and path
-                    group = etree.SubElement(root, f"{{{SVG_NS}}}g", id=segment_name)
-                    path = etree.SubElement(
-                        group,
-                        f"{{{SVG_NS}}}path",
-                        d=path_d,
-                        fill="#FF0000",
-                        opacity="0.5",
-                        attrib={"fill-rule": "evenodd"} # Important for holes
+                    st.session_state.original_svg = add_path_to_svg(
+                        st.session_state.original_svg,
+                        path_d,
+                        segment_name,
+                        fill_color="#FF0000",
+                        opacity=0.5
                     )
-
-                    # Update the stored original SVG with the newly injected element
-                    st.session_state.original_svg = etree.tostring(root, pretty_print=True, encoding="unicode")
 
                     # Clear current selection for the next segment
                     st.session_state.points = []

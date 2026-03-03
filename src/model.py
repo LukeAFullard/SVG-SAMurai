@@ -64,9 +64,16 @@ def predict_mask(image, image_embeddings, input_points, input_labels):
             multimask_output=False, # We only want the best mask
         )
 
-    # outputs.pred_masks is (batch_size, num_masks, height, width)
-    # Get the predicted mask and squeeze it to a 2D array
-    mask = outputs.pred_masks.squeeze().cpu().numpy()
+    # Process the predicted mask back to the original image size
+    # inputs contains original_sizes and reshaped_input_sizes from the processor call
+    masks = processor.image_processor.post_process_masks(
+        outputs.pred_masks.cpu(),
+        inputs["original_sizes"].cpu(),
+        inputs["reshaped_input_sizes"].cpu()
+    )
+
+    # masks is a list of tensors, get the first one and squeeze it to a 2D array
+    mask = masks[0].squeeze().numpy()
 
     # The mask is boolean, convert to uint8 for OpenCV (0 and 255)
     binary_mask = (mask * 255).astype(np.uint8)
