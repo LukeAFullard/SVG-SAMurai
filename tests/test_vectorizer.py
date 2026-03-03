@@ -57,3 +57,19 @@ def test_mask_to_svg_path_simplification():
 
     # The simplified path should have fewer points (fewer 'L' commands)
     assert detailed_path.count("L") > simplified_path.count("L")
+
+def test_mask_to_svg_path_contours_none(mocker):
+    # Test when cv2.findContours returns None for contours
+    mocker.patch('cv2.findContours', return_value=(None, None))
+    mask = np.zeros((100, 100), dtype=np.uint8)
+
+    path_str = mask_to_svg_path(mask)
+    assert path_str == "", "Should return empty string when contours is None"
+
+def test_mask_to_svg_path_hierarchy_none(mocker):
+    # Test when cv2.findContours returns valid contours but None for hierarchy
+    mocker.patch('cv2.findContours', return_value=([np.array([[[0, 0]], [[0, 10]], [[10, 10]]])], None))
+    mask = np.zeros((100, 100), dtype=np.uint8)
+
+    path_str = mask_to_svg_path(mask)
+    assert path_str == "", "Should return empty string when hierarchy is None"
