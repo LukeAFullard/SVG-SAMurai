@@ -44,6 +44,25 @@ def test_add_path_invalid_xml():
     # Should gracefully return the original string if parsing fails
     assert result == invalid_xml
 
+def test_svg_to_png_bytes():
+    """
+    Verifies that svg_to_png_bytes correctly converts an SVG string
+    to PNG bytes using cairosvg.
+    """
+    svg_str = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"100\" height=\"100\"></svg>"
+    mock_png_bytes = b"fake png data"
+
+    from src.xml_manager import svg_to_png_bytes
+
+    with patch("cairosvg.svg2png", return_value=mock_png_bytes) as mock_svg2png:
+        result = svg_to_png_bytes(svg_str)
+
+        # Verify cairosvg.svg2png was called with the correct bytestring
+        mock_svg2png.assert_called_once_with(bytestring=svg_str.encode('utf-8'))
+
+        # Verify the result is the expected PNG bytes
+        assert result == mock_png_bytes
+
 def test_parse_svg_to_image():
     """
     Verifies that parse_svg_to_image correctly converts SVG bytes
