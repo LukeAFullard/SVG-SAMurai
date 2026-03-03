@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 
+
 def mask_to_svg_path(mask: np.ndarray, epsilon_factor: float = 0.005) -> str:
     """
     Converts a binary mask to an SVG path string.
@@ -13,11 +14,15 @@ def mask_to_svg_path(mask: np.ndarray, epsilon_factor: float = 0.005) -> str:
     Returns:
         str: An SVG path data string (`M x,y L x,y Z ...`).
     """
+    if not isinstance(mask, np.ndarray) or mask.ndim != 2:
+        raise ValueError("Mask must be a 2D numpy array.")
     # 1. Extract Contours
     # RETR_CCOMP retrieves all of the contours and organizes them into a two-level hierarchy.
     # At the top level, there are external boundaries of the components.
     # At the second level, there are boundaries of the holes.
-    contours, hierarchy = cv2.findContours(mask, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+    contours, hierarchy = cv2.findContours(
+        mask, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE
+    )
 
     if contours is None or len(contours) == 0:
         return ""

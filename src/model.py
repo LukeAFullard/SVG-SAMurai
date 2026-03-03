@@ -3,6 +3,7 @@ from transformers import SamModel, SamProcessor
 import streamlit as st
 import numpy as np
 
+
 # Use @st.cache_resource to avoid reloading the model on every rerun
 @st.cache_resource(show_spinner="Loading Segment Anything Model (SAM)...")
 def load_sam_model():
@@ -15,7 +16,10 @@ def load_sam_model():
     return model, processor, device
 
 
-@st.cache_data(show_spinner="Computing Image Embeddings...")
+@st.cache_data(
+    show_spinner="Computing Image Embeddings...",
+    hash_funcs={torch.Tensor: lambda _: None},
+)
 def compute_image_embedding(image):
     """
     Computes and caches the SAM image embedding for a given image.
@@ -49,10 +53,7 @@ def predict_mask(image, image_embeddings, input_points, input_labels):
 
     # Preprocess prompts
     inputs = processor(
-        images=image,
-        input_points=points,
-        input_labels=labels,
-        return_tensors="pt"
+        images=image, input_points=points, input_labels=labels, return_tensors="pt"
     ).to(device)
 
     # Run prediction using the cached embeddings
@@ -61,7 +62,7 @@ def predict_mask(image, image_embeddings, input_points, input_labels):
             image_embeddings=image_embeddings,
             input_points=inputs.input_points,
             input_labels=inputs.input_labels,
-            multimask_output=False, # We only want the best mask
+            multimask_output=False,  # We only want the best mask
         )
 
     # Process the predicted mask back to the original image size
@@ -69,7 +70,7 @@ def predict_mask(image, image_embeddings, input_points, input_labels):
     masks = processor.image_processor.post_process_masks(
         outputs.pred_masks.cpu(),
         inputs["original_sizes"].cpu(),
-        inputs["reshaped_input_sizes"].cpu()
+        inputs["reshaped_input_sizes"].cpu(),
     )
 
     # masks is a list of tensors, get the first one and squeeze it to a 2D array
