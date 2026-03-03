@@ -22,11 +22,11 @@ def mask_to_svg_path(mask: np.ndarray, epsilon_factor: float = 0.005) -> str:
 
 ### 1.2 Unhashable Type in Caching (Performance/Stability Bug)
 **Location:** `src/model.py`
-**Issue:** `compute_image_embedding` returns a `torch.Tensor` and is decorated with `@st.cache_data`. Streamlit's data cache attempts to hash the return value to detect mutations. Hashing PyTorch tensors is expensive and can lead to unexpected crashes or severe performance degradation.
-**Fix:** Instructed Streamlit to skip hashing the tensor result using the `hash_funcs` parameter, as embeddings are immutable in this context.
+**Issue:** `compute_image_embedding` returns a `torch.Tensor` and is decorated with `@st.cache_data`. Streamlit's data cache relies on pickling/hashing, making it highly inefficient or unstable for caching heavy, non-serializable objects like PyTorch tensors.
+**Fix:** Refactored the decorator to `@st.cache_resource`, which keeps objects entirely in-memory by reference, resolving the severe performance degradation.
 ```python
-@st.cache_data(show_spinner="Computing Image Embeddings...", hash_funcs={torch.Tensor: lambda _: None})
-def compute_image_embedding(image):
+@st.cache_resource(show_spinner="Computing Image Embeddings...")
+def compute_image_embedding(image: Image.Image) -> torch.Tensor:
 ```
 
 ### 1.3 Testing Assertion Ordering Flaw
@@ -39,6 +39,16 @@ assert 'height="100"' in at.session_state.original_svg
 assert 'viewBox="0 0 100 100"' in at.session_state.original_svg
 ```
 
+### 1.4 Stricter Type Hinting & Stability
+**Location:** `src/model.py`, `src/xml_manager.py`
+**Issue:** The project lacked consistent static type hints for complex ML objects (like PyTorch tensors or OpenCV arrays), making maintenance and parameter validation difficult.
+**Fix:** Enforced strict typing annotations using `typing.List`, `typing.Tuple`, `Image.Image`, `np.ndarray`, and `torch.Tensor` across module signatures to enable better static analysis.
+
+### 1.5 Strict Dependency Pinning
+**Location:** `requirements.txt`
+**Issue:** The repository used unpinned minimum versioning (e.g., `>=2.0.0`), which exposes CI/CD and deployment pipelines to unexpected breaking changes on package updates.
+**Fix:** Strictly pinned all key dependencies to explicit lock versions (`==`) in a newly generated `requirements.txt` to ensure completely reproducible builds without destabilizing the flexible bounds defined in `pyproject.toml`.
+
 ---
 
 ## 2. Refactoring Suggestions (For Future Maintainability)
@@ -47,8 +57,6 @@ While the code is currently functional, the following architectural improvements
 
 *   **Modularize Streamlit State Management:** `app.py` currently manages complex state (`points`, `labels`, `current_mask`, `segments`) directly via dictionary keys. Refactor this into a dataclass or a dedicated State Management class to provide type hinting and better separation of concerns.
 *   **Decouple UI from Logic:** Move the "Undo Last Click" and "Save Segment" logic out of `app.py` and into dedicated controllers or helper functions in a new `src/controllers.py` module.
-*   **Stricter Type Hinting:** Add comprehensive type hints to `app.py` and `src/model.py` (e.g., using `npt.NDArray` from `numpy.typing`).
-*   **Dependency Management:** While `pyproject.toml` defines acceptable version ranges, ensure that the `poetry.lock` file is consistently checked into version control to guarantee deterministic builds in CI/CD pipelines.
 
 ---
 
