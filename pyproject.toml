@@ -1,0 +1,24 @@
+[project]
+name = "svg-samurai"
+version = "0.1.0"
+description = "SVG-SAMurai"
+authors = [
+    {name = "Jules"}
+]
+readme = "README.md"
+requires-python = ">=3.10, <3.13"
+dependencies = [
+    "torch (>=2.10.0,<3.0.0)",
+    "transformers (>=5.2.0,<6.0.0)",
+    "streamlit (>=1.54.0,<2.0.0)",
+    "lxml (>=6.0.2,<7.0.0)",
+    "opencv-python (>=4.13.0.92,<5.0.0.0)",
+    "pillow (>=12.1.1,<13.0.0)",
+    "cairosvg (>=2.8.2,<3.0.0)",
+    "streamlit-image-coordinates (>=0.4.0,<0.5.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
