@@ -5,7 +5,7 @@ from streamlit_image_coordinates import streamlit_image_coordinates
 
 from src.model import compute_image_embedding, predict_mask
 from src.vectorizer import mask_to_svg_path
-from src.xml_manager import SVG_NS, load_image
+from src.xml_manager import SVG_NS, NSMAP, load_image, create_base_svg
 
 st.set_page_config(page_title="SVG-SAMurai", layout="wide", page_icon="🗡️")
 
@@ -55,7 +55,7 @@ if uploaded_file is not None:
             else:
                 # Create a blank SVG canvas with the original raster image dimensions
                 width, height = image.size
-                st.session_state.original_svg = f'<svg width="{width}" height="{height}" viewBox="0 0 {width} {height}" xmlns="{SVG_NS}"></svg>'
+                st.session_state.original_svg = create_base_svg(width, height)
 
             # Compute image embeddings once
             st.session_state.image_embedding = compute_image_embedding(image)
