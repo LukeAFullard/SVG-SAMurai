@@ -2,11 +2,13 @@ import torch
 from transformers import SamModel, SamProcessor
 import streamlit as st
 import numpy as np
+from PIL import Image
+from typing import Tuple, List
 
 
 # Use @st.cache_resource to avoid reloading the model on every rerun
 @st.cache_resource(show_spinner="Loading Segment Anything Model (SAM)...")
-def load_sam_model():
+def load_sam_model() -> Tuple[SamModel, SamProcessor, str]:
     """Loads the SAM model and processor from Hugging Face."""
     device = "cuda" if torch.cuda.is_available() else "cpu"
     # Using facebook/sam-vit-base as the standard baseline
@@ -16,11 +18,8 @@ def load_sam_model():
     return model, processor, device
 
 
-@st.cache_data(
-    show_spinner="Computing Image Embeddings...",
-    hash_funcs={torch.Tensor: lambda _: None},
-)
-def compute_image_embedding(image):
+@st.cache_resource(show_spinner="Computing Image Embeddings...")
+def compute_image_embedding(image: Image.Image) -> torch.Tensor:
     """
     Computes and caches the SAM image embedding for a given image.
     This is the heavy part of the computation.
@@ -37,7 +36,12 @@ def compute_image_embedding(image):
     return image_embeddings
 
 
-def predict_mask(image, image_embeddings, input_points, input_labels):
+def predict_mask(
+    image: Image.Image,
+    image_embeddings: torch.Tensor,
+    input_points: List[List[int]],
+    input_labels: List[int],
+) -> np.ndarray:
     """
     Predicts a binary mask given the image embeddings and prompt points.
     input_points: list of [x, y] coordinates

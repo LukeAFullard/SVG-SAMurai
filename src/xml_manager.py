@@ -2,6 +2,7 @@ from lxml import etree
 import cairosvg
 import io
 from PIL import Image
+from typing import Any
 
 # Namespace for SVG creation
 SVG_NS = "http://www.w3.org/2000/svg"
@@ -84,9 +85,9 @@ def parse_svg_to_image(svg_bytes: bytes) -> Image.Image:
     return Image.open(io.BytesIO(png_bytes))
 
 
-def load_image(uploaded_file) -> Image.Image:
+def load_image(uploaded_file: Any) -> Image.Image:
     """Loads an uploaded image (Raster or Vector) and returns a PIL Image."""
-    if uploaded_file.type == "image/svg+xml":
+    if getattr(uploaded_file, "type", "") == "image/svg+xml":
         return parse_svg_to_image(uploaded_file.getvalue())
     else:
         # Handle regular rasters (PNG, JPG)
