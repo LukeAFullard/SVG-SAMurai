@@ -57,10 +57,6 @@ def add_path_to_svg(svg_str: str, path_d: str, path_id: str, fill_color: str = "
 
     return etree.tostring(root, pretty_print=True, encoding="unicode")
 
-def svg_to_png_bytes(svg_str: str) -> bytes:
-    """Converts an SVG string into PNG bytes using cairosvg."""
-    return cairosvg.svg2png(bytestring=svg_str.encode('utf-8'))
-
 def parse_svg_to_image(svg_bytes: bytes) -> Image.Image:
     """Converts uploaded SVG file bytes into a PIL Image."""
     png_bytes = cairosvg.svg2png(bytestring=svg_bytes)
