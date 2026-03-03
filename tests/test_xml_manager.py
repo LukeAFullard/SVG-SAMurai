@@ -70,3 +70,37 @@ def test_parse_svg_to_image():
 
             # Verify the result is the expected image object
             assert result == mock_image
+
+@patch("src.xml_manager.parse_svg_to_image")
+def test_load_image_svg(mock_parse_svg_to_image):
+    """Verifies load_image correctly handles SVG files."""
+    mock_file = MagicMock()
+    mock_file.type = "image/svg+xml"
+    mock_file.getvalue.return_value = b"<svg></svg>"
+
+    mock_image = MagicMock(spec=Image.Image)
+    mock_parse_svg_to_image.return_value = mock_image
+
+    from src.xml_manager import load_image
+    result = load_image(mock_file)
+
+    mock_parse_svg_to_image.assert_called_once_with(b"<svg></svg>")
+    assert result == mock_image
+
+@patch("PIL.Image.open")
+def test_load_image_raster(mock_image_open):
+    """Verifies load_image correctly handles raster files (PNG, JPG)."""
+    mock_file = MagicMock()
+    mock_file.type = "image/png"
+
+    mock_image = MagicMock(spec=Image.Image)
+    mock_converted_image = MagicMock(spec=Image.Image)
+    mock_image.convert.return_value = mock_converted_image
+    mock_image_open.return_value = mock_image
+
+    from src.xml_manager import load_image
+    result = load_image(mock_file)
+
+    mock_image_open.assert_called_once_with(mock_file)
+    mock_image.convert.assert_called_once_with("RGB")
+    assert result == mock_converted_image
