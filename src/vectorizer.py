@@ -19,7 +19,7 @@ def mask_to_svg_path(mask: np.ndarray, epsilon_factor: float = 0.005) -> str:
     # At the second level, there are boundaries of the holes.
     contours, hierarchy = cv2.findContours(mask, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
 
-    if not contours:
+    if contours is None or len(contours) == 0:
         return ""
 
     path_data = []
@@ -27,6 +27,9 @@ def mask_to_svg_path(mask: np.ndarray, epsilon_factor: float = 0.005) -> str:
     # 2. Iterate through contours and hierarchy to build the path
     # The hierarchy array has shape (1, num_contours, 4)
     # The 4 elements are: [Next, Previous, First_Child, Parent]
+    if hierarchy is None:
+        return ""
+
     hierarchy = hierarchy[0]
 
     for i, contour in enumerate(contours):

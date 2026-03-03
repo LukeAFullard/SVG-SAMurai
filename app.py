@@ -56,7 +56,7 @@ if uploaded_file is not None:
 
             # If the original file was an SVG, save its string representation
             if uploaded_file.type == "image/svg+xml":
-                st.session_state.original_svg = uploaded_file.getvalue().decode('utf-8')
+                st.session_state.original_svg = uploaded_file.getvalue().decode('utf-8', errors='replace')
             else:
                 # Create a blank SVG canvas with the original raster image dimensions
                 width, height = image.size
