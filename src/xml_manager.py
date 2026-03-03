@@ -59,7 +59,8 @@ def add_path_to_svg(svg_str: str, path_d: str, path_id: str, fill_color: str = "
 
 def parse_svg_to_image(svg_bytes: bytes) -> Image.Image:
     """Converts uploaded SVG file bytes into a PIL Image."""
-    png_bytes = cairosvg.svg2png(bytestring=svg_bytes)
+    # Pass url_fetcher to block network and local file access from within SVG
+    png_bytes = cairosvg.svg2png(bytestring=svg_bytes, url_fetcher=lambda *args, **kwargs: b"")
     return Image.open(io.BytesIO(png_bytes))
 
 def load_image(uploaded_file) -> Image.Image:

@@ -79,7 +79,12 @@ def test_parse_svg_to_image():
             result = parse_svg_to_image(svg_bytes)
 
             # Verify cairosvg.svg2png was called with the correct bytes
-            mock_svg2png.assert_called_once_with(bytestring=svg_bytes)
+            mock_svg2png.assert_called_once()
+            args, kwargs = mock_svg2png.call_args
+            assert kwargs.get("bytestring") == svg_bytes
+            assert "url_fetcher" in kwargs
+            # Test that url_fetcher safely returns empty bytes
+            assert kwargs["url_fetcher"]("http://example.com/image.png") == b""
 
             # Verify Image.open was called with a BytesIO wrapping the PNG bytes
             mock_image_open.assert_called_once()
