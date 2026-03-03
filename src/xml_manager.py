@@ -21,8 +21,8 @@ def add_path_to_svg(svg_str: str, path_d: str, path_id: str, fill_color: str = "
         return svg_str
 
     try:
-        # Provide a parser that handles basic errors
-        parser = etree.XMLParser(recover=True)
+        # Provide a parser that handles basic errors and mitigates XXE injection
+        parser = etree.XMLParser(recover=True, resolve_entities=False, no_network=True)
         root = etree.fromstring(svg_str.encode('utf-8', errors='replace'), parser=parser)
         if root is None:
             return svg_str
