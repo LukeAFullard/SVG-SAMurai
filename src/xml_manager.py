@@ -21,27 +21,40 @@ def add_path_to_svg(svg_str: str, path_d: str, path_id: str, fill_color: str = "
         return svg_str
 
     try:
-        root = etree.fromstring(svg_str.encode('utf-8'))
-    except etree.XMLSyntaxError:
-        # If the string isn't an XML document, create one
-        # Try to infer dimensions if possible or default to a large canvas
+        # Provide a parser that handles basic errors
+        parser = etree.XMLParser(recover=True)
+        root = etree.fromstring(svg_str.encode('utf-8', errors='replace'), parser=parser)
+        if root is None:
+            return svg_str
+    except Exception:
+        # If the string isn't an XML document or parsing fails
         return svg_str
 
+    # Find the correct namespace for the root or default to SVG_NS
+    ns = SVG_NS
+    if root.nsmap and None in root.nsmap:
+        ns = root.nsmap[None]
+    elif root.tag.startswith("{"):
+        ns = root.tag[1:].split("}")[0]
+
+    # Clean the namespace map to avoid redundant ns0 prefixes
+    # Ensure xmlns is explicitly available in nsmap of new elements
+    new_nsmap = {None: ns} if ns else None
+
     # Create the <g id="path_id">
-    group = etree.SubElement(root, f"{{{SVG_NS}}}g", id=path_id)
+    group = etree.SubElement(root, f"{{{ns}}}g" if ns else "g", id=path_id, nsmap=new_nsmap)
 
     # Create the <path>
     # Using fill-rule="evenodd" is important when combining outer boundaries and inner holes
     path = etree.SubElement(
         group,
-        f"{{{SVG_NS}}}path",
+        f"{{{ns}}}path" if ns else "path",
         d=path_d,
         fill=fill_color,
         opacity=str(opacity),
         attrib={"fill-rule": "evenodd"} # Handles holes properly
     )
 
-    # Ensure xmlns attribute isn't missing
     return etree.tostring(root, pretty_print=True, encoding="unicode")
 
 def svg_to_png_bytes(svg_str: str) -> bytes:
