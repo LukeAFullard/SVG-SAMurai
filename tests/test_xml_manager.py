@@ -121,3 +121,22 @@ def test_load_image_raster(mock_image_open):
     mock_image_open.assert_called_once_with(mock_file)
     mock_image.convert.assert_called_once_with("RGB")
     assert result == mock_converted_image
+
+
+def test_create_svg_with_image():
+    from src.xml_manager import create_svg_with_image
+    from PIL import Image
+    from lxml import etree
+
+    img = Image.new("RGB", (100, 100))
+    svg_str = create_svg_with_image(img)
+    root = etree.fromstring(svg_str.encode("utf-8"))
+
+    assert root.tag == f"{{{SVG_NS}}}svg"
+    assert root.attrib["width"] == "100"
+    assert root.attrib["height"] == "100"
+
+    # Check that <image> element exists
+    image_elems = root.findall(f"{{{SVG_NS}}}image")
+    assert len(image_elems) == 1
+    assert "data:image/png;base64," in image_elems[0].attrib.get("href", "")

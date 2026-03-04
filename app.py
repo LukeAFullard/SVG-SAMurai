@@ -5,7 +5,7 @@ from streamlit_image_coordinates import streamlit_image_coordinates
 
 from src.model import compute_image_embedding, predict_mask
 from src.vectorizer import mask_to_svg_path
-from src.xml_manager import load_image, create_base_svg
+from src.xml_manager import load_image, create_svg_with_image
 
 st.set_page_config(page_title="SVG-SAMurai", layout="wide", page_icon="🗡️")
 
@@ -16,6 +16,10 @@ if "image_embedding" not in st.session_state:
     st.session_state.image_embedding = None
 if "points" not in st.session_state:
     st.session_state.points = []
+if "last_processed_point" not in st.session_state:
+    st.session_state.last_processed_point = None
+if "segment_name" not in st.session_state:
+    st.session_state.segment_name = ""
 if "labels" not in st.session_state:
     st.session_state.labels = []
 if "current_mask" not in st.session_state:
@@ -47,6 +51,8 @@ if uploaded_file is not None:
         st.session_state.points = []
         st.session_state.labels = []
         st.session_state.current_mask = None
+        st.session_state.last_processed_point = None
+        st.session_state.segment_name = ""
         st.session_state.segments = {}
         st.session_state.original_svg = None
 
@@ -62,9 +68,8 @@ if uploaded_file is not None:
                     "utf-8", errors="replace"
                 )
             else:
-                # Create a blank SVG canvas with the original raster image dimensions
-                width, height = image.size
-                st.session_state.original_svg = create_base_svg(width, height)
+                # Create an SVG canvas with the embedded raster image
+                st.session_state.original_svg = create_svg_with_image(image)
 
             # Compute image embeddings once
             st.session_state.image_embedding = compute_image_embedding(image)
@@ -118,7 +123,8 @@ if uploaded_file is not None:
 
             # Check if this is a new click (prevent reruns from adding the same point repeatedly)
             new_point = [x, y]
-            if not st.session_state.points or st.session_state.points[-1] != new_point:
+            if st.session_state.last_processed_point != new_point:
+                st.session_state.last_processed_point = new_point
                 st.session_state.points.append(new_point)
                 st.session_state.labels.append(label)
 
@@ -151,6 +157,7 @@ if uploaded_file is not None:
                         st.session_state.current_mask = mask
                     else:
                         st.session_state.current_mask = None
+                        st.session_state.segment_name = ""
                     st.rerun()
 
         with col_btn2:
@@ -158,12 +165,15 @@ if uploaded_file is not None:
                 st.session_state.points = []
                 st.session_state.labels = []
                 st.session_state.current_mask = None
+                st.session_state.segment_name = ""
                 st.rerun()
 
     with col2:
         st.subheader("Segment Management")
 
-        segment_name = st.text_input("Segment Name", placeholder="e.g., car_body")
+        segment_name = st.text_input(
+            "Segment Name", placeholder="e.g., car_body", key="segment_name"
+        )
         epsilon_factor = st.slider(
             "Vectorization Simplification (epsilon)",
             min_value=0.001,
@@ -202,6 +212,7 @@ if uploaded_file is not None:
                     st.session_state.points = []
                     st.session_state.labels = []
                     st.session_state.current_mask = None
+                    st.session_state.segment_name = ""
 
                     st.success(f"Segment '{segment_name}' saved!")
                     st.rerun()
