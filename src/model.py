@@ -78,7 +78,16 @@ def predict_mask(
     )
 
     # masks is a list of tensors, get the first one and squeeze it to a 2D array
-    mask = masks[0].squeeze().numpy()
+    mask = masks[0]
+    # Squeeze out the batch and channel dimensions if present, but keep spatial dims.
+    # Usually shape is (1, 1, H, W) or (1, H, W)
+    if mask.ndim > 2:
+        mask = mask.squeeze()
+        # If the image was 1x1, squeeze might have removed all dimensions.
+        if mask.ndim < 2:
+            mask = mask.view(masks[0].shape[-2], masks[0].shape[-1])
+
+    mask = mask.numpy()
 
     # The mask is boolean, convert to uint8 for OpenCV (0 and 255)
     binary_mask = (mask * 255).astype(np.uint8)
