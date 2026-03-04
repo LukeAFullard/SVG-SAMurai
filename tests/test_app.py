@@ -41,6 +41,7 @@ def test_app_file_upload(mock_compute_embedding, mock_load_image):
             super().__init__(content)
             self.name = name
             self.type = type
+            self.file_id = "test_file_id"
 
     img_byte_arr = io.BytesIO()
     dummy_image.save(img_byte_arr, format="PNG")
@@ -93,6 +94,7 @@ def test_app_interactive_segmentation(
             super().__init__(content)
             self.name = name
             self.type = type
+            self.file_id = "test_file_id"
 
     with patch("streamlit.file_uploader") as mock_uploader:
         mock_file = MockUploadedFile("test.png", "image/png", img_byte_arr.getvalue())
@@ -152,6 +154,7 @@ def test_app_save_segment(
             super().__init__(content)
             self.name = name
             self.type = type
+            self.file_id = "test_file_id"
 
     with patch("streamlit.file_uploader") as mock_uploader:
         mock_file = MockUploadedFile("test.png", "image/png", img_byte_arr.getvalue())

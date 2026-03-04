@@ -38,10 +38,10 @@ uploaded_file = st.file_uploader(
 if uploaded_file is not None:
     # Reset state if a new file is uploaded
     if (
-        "last_uploaded" not in st.session_state
-        or st.session_state.last_uploaded != uploaded_file.name
+        "last_uploaded_file_id" not in st.session_state
+        or st.session_state.last_uploaded_file_id != uploaded_file.file_id
     ):
-        st.session_state.last_uploaded = uploaded_file.name
+        st.session_state.last_uploaded_file_id = uploaded_file.file_id
         st.session_state.image = None
         st.session_state.image_embedding = None
         st.session_state.points = []
