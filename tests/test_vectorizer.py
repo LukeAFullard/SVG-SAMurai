@@ -8,8 +8,8 @@ import pytest
 def test_mask_to_svg_path_empty_mask():
     # Test with an empty mask (no contours)
     mask = np.zeros((100, 100), dtype=np.uint8)
-    path_str = mask_to_svg_path(mask)
-    assert path_str == "", "Empty mask should result in an empty string"
+    paths = mask_to_svg_path(mask)
+    assert paths == [], "Empty mask should result in an empty list"
 
 
 def test_mask_to_svg_path_invalid_mask():
@@ -25,8 +25,10 @@ def test_mask_to_svg_path_simple_square():
     # Draw a 50x50 square in the center
     mask[25:75, 25:75] = 255
 
-    path_str = mask_to_svg_path(mask, epsilon_factor=0.001)
+    paths = mask_to_svg_path(mask, epsilon_factor=0.001)
 
+    assert len(paths) == 1
+    path_str = paths[0]
     # We expect a path that starts with M and has 3 L commands, ending with Z
     assert path_str.startswith("M")
     assert "Z" in path_str
@@ -45,10 +47,12 @@ def test_mask_to_svg_path_with_hole():
     # Inner hole
     mask[30:70, 30:70] = 0
 
-    path_str = mask_to_svg_path(mask, epsilon_factor=0.001)
+    paths = mask_to_svg_path(mask, epsilon_factor=0.001)
 
+    assert len(paths) == 1
+    path_str = paths[0]
     # We should have two contours: one for the outer boundary, one for the inner hole
-    # So we expect two "M" commands and two "Z" commands
+    # So we expect two "M" commands and two "Z" commands in the same string
     assert path_str.count("M") == 2
     assert path_str.count("Z") == 2
 
@@ -63,11 +67,14 @@ def test_mask_to_svg_path_simplification():
         mask[100 + int(48 * np.sin(i)), 100 + int(48 * np.cos(i))] = 0
 
     # Low epsilon (high detail)
-    detailed_path = mask_to_svg_path(mask, epsilon_factor=0.0001)
+    detailed_paths = mask_to_svg_path(mask, epsilon_factor=0.0001)
 
     # High epsilon (low detail / simplified)
-    simplified_path = mask_to_svg_path(mask, epsilon_factor=0.1)
+    simplified_paths = mask_to_svg_path(mask, epsilon_factor=0.1)
 
+    assert len(detailed_paths) > 0 and len(simplified_paths) > 0
+    detailed_path = detailed_paths[0]
+    simplified_path = simplified_paths[0]
     # The simplified path should have fewer points (fewer 'L' commands)
     assert detailed_path.count("L") > simplified_path.count("L")
 
@@ -77,8 +84,8 @@ def test_mask_to_svg_path_contours_none(mocker):
     mocker.patch("cv2.findContours", return_value=(None, None))
     mask = np.zeros((100, 100), dtype=np.uint8)
 
-    path_str = mask_to_svg_path(mask)
-    assert path_str == "", "Should return empty string when contours is None"
+    paths = mask_to_svg_path(mask)
+    assert paths == [], "Should return empty list when contours is None"
 
 
 def test_mask_to_svg_path_hierarchy_none(mocker):
@@ -89,5 +96,5 @@ def test_mask_to_svg_path_hierarchy_none(mocker):
     )
     mask = np.zeros((100, 100), dtype=np.uint8)
 
-    path_str = mask_to_svg_path(mask)
-    assert path_str == "", "Should return empty string when hierarchy is None"
+    paths = mask_to_svg_path(mask)
+    assert paths == [], "Should return empty list when hierarchy is None"

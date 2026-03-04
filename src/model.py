@@ -92,4 +92,31 @@ def predict_mask(
     # The mask is boolean, convert to uint8 for OpenCV (0 and 255)
     binary_mask = (mask * 255).astype(np.uint8)
 
+    # To prevent "overlap onto a different part of the image", keep only the connected
+    # components of the mask that actually contain at least one positive input point.
+    import cv2
+    num_labels, labels_img = cv2.connectedComponents(binary_mask)
+    if num_labels > 1:
+        # labels_img has values from 0 (background) to num_labels - 1
+        filtered_mask = np.zeros_like(binary_mask)
+        positive_points_labels = set()
+
+        for pt, label in zip(input_points, input_labels):
+            if label == 1:  # Positive point
+                x, y = pt
+                # Make sure point is within image bounds
+                if 0 <= y < labels_img.shape[0] and 0 <= x < labels_img.shape[1]:
+                    component_label = labels_img[y, x]
+                    if component_label > 0:  # Ignore background
+                        positive_points_labels.add(component_label)
+
+        # Keep only the connected components that were clicked
+        for comp_label in positive_points_labels:
+            filtered_mask[labels_img == comp_label] = 255
+
+        # If for some reason no positive points fell exactly on a mask component,
+        # fallback to returning the original mask to prevent returning an empty mask.
+        if len(positive_points_labels) > 0:
+            binary_mask = filtered_mask
+
     return binary_mask
