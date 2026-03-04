@@ -56,6 +56,7 @@ def add_path_to_svg(
     path_id: str,
     fill_color: str = "#FF0000",
     opacity: Optional[float] = None,
+    pointer_events: Optional[str] = None,
 ) -> str:
     """
     Injects an SVG `<path>` into an existing SVG string within a `<g>` group using lxml.
@@ -114,6 +115,8 @@ def add_path_to_svg(
         )
         if opacity is not None:
             path_elem.set("opacity", str(opacity))
+        if pointer_events is not None:
+            path_elem.set("pointer-events", pointer_events)
 
     return etree.tostring(root, pretty_print=True, encoding="unicode")
 

@@ -207,6 +207,7 @@ if uploaded_file is not None:
                         path_d,
                         segment_name,
                         fill_color="none",
+                        pointer_events="visibleStroke",
                     )
 
                     # Clear current selection for the next segment
