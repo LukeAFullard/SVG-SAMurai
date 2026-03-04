@@ -7,7 +7,8 @@ from PIL import Image
 
 def test_create_base_svg():
     svg_str = create_base_svg(800, 600)
-    root = etree.fromstring(svg_str.encode("utf-8"))
+    parser = etree.XMLParser(resolve_entities=False, no_network=True)
+    root = etree.fromstring(svg_str.encode("utf-8"), parser=parser)
 
     assert root.tag == f"{{{SVG_NS}}}svg"
     assert root.attrib["width"] == "800"
@@ -130,7 +131,8 @@ def test_create_svg_with_image():
 
     img = Image.new("RGB", (100, 100))
     svg_str = create_svg_with_image(img)
-    root = etree.fromstring(svg_str.encode("utf-8"))
+    parser = etree.XMLParser(resolve_entities=False, no_network=True)
+    root = etree.fromstring(svg_str.encode("utf-8"), parser=parser)
 
     assert root.tag == f"{{{SVG_NS}}}svg"
     assert root.attrib["width"] == "100"
