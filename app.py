@@ -206,8 +206,7 @@ if uploaded_file is not None:
                         st.session_state.original_svg,
                         path_d,
                         segment_name,
-                        fill_color="transparent",
-                        opacity=0.0,
+                        fill_color="none",
                     )
 
                     # Clear current selection for the next segment

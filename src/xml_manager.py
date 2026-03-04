@@ -48,14 +48,14 @@ def create_base_svg(width: int, height: int) -> str:
     return etree.tostring(root, pretty_print=True, encoding="unicode")
 
 
-from typing import Union, List
+from typing import Union, List, Optional
 
 def add_path_to_svg(
     svg_str: str,
     path_d: Union[str, List[str]],
     path_id: str,
     fill_color: str = "#FF0000",
-    opacity: float = 0.5,
+    opacity: Optional[float] = None,
 ) -> str:
     """
     Injects an SVG `<path>` into an existing SVG string within a `<g>` group using lxml.
@@ -105,14 +105,15 @@ def add_path_to_svg(
     for i, pd in enumerate(path_d_list):
         # We can append an index to the id if there are multiple geometries, but
         # since they are in a group with `id=path_id`, we don't strictly need an `id` on each path.
-        etree.SubElement(
+        path_elem = etree.SubElement(
             group,
             f"{{{ns}}}path" if ns else "path",
             d=pd,
             fill=fill_color,
-            opacity=str(opacity),
             attrib={"fill-rule": "evenodd"},  # Handles holes properly
         )
+        if opacity is not None:
+            path_elem.set("opacity", str(opacity))
 
     return etree.tostring(root, pretty_print=True, encoding="unicode")
 
