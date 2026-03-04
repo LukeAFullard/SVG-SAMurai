@@ -48,9 +48,11 @@ def create_base_svg(width: int, height: int) -> str:
     return etree.tostring(root, pretty_print=True, encoding="unicode")
 
 
+from typing import Union, List
+
 def add_path_to_svg(
     svg_str: str,
-    path_d: str,
+    path_d: Union[str, List[str]],
     path_id: str,
     fill_color: str = "#FF0000",
     opacity: float = 0.5,
@@ -93,16 +95,24 @@ def add_path_to_svg(
     title = etree.SubElement(group, f"{{{ns}}}title" if ns else "title")
     title.text = path_id
 
-    # Create the <path>
+    # Create the <path> elements
     # Using fill-rule="evenodd" is important when combining outer boundaries and inner holes
-    etree.SubElement(
-        group,
-        f"{{{ns}}}path" if ns else "path",
-        d=path_d,
-        fill=fill_color,
-        opacity=str(opacity),
-        attrib={"fill-rule": "evenodd"},  # Handles holes properly
-    )
+    if isinstance(path_d, str):
+        path_d_list = [path_d]
+    else:
+        path_d_list = path_d
+
+    for i, pd in enumerate(path_d_list):
+        # We can append an index to the id if there are multiple geometries, but
+        # since they are in a group with `id=path_id`, we don't strictly need an `id` on each path.
+        etree.SubElement(
+            group,
+            f"{{{ns}}}path" if ns else "path",
+            d=pd,
+            fill=fill_color,
+            opacity=str(opacity),
+            attrib={"fill-rule": "evenodd"},  # Handles holes properly
+        )
 
     return etree.tostring(root, pretty_print=True, encoding="unicode")
 

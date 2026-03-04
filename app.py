@@ -20,6 +20,8 @@ if "last_processed_point" not in st.session_state:
     st.session_state.last_processed_point = None
 if "segment_name" not in st.session_state:
     st.session_state.segment_name = ""
+if "segment_name_widget" not in st.session_state:
+    st.session_state.segment_name_widget = ""
 if "labels" not in st.session_state:
     st.session_state.labels = []
 if "current_mask" not in st.session_state:
@@ -52,7 +54,7 @@ if uploaded_file is not None:
         st.session_state.labels = []
         st.session_state.current_mask = None
         st.session_state.last_processed_point = None
-        st.session_state.segment_name = ""
+        st.session_state.segment_name_widget = ""
         st.session_state.segments = {}
         st.session_state.original_svg = None
 
@@ -157,7 +159,7 @@ if uploaded_file is not None:
                         st.session_state.current_mask = mask
                     else:
                         st.session_state.current_mask = None
-                        st.session_state.segment_name = ""
+                        st.session_state.segment_name_widget = ""
                     st.rerun()
 
         with col_btn2:
@@ -165,14 +167,14 @@ if uploaded_file is not None:
                 st.session_state.points = []
                 st.session_state.labels = []
                 st.session_state.current_mask = None
-                st.session_state.segment_name = ""
+                st.session_state.segment_name_widget = ""
                 st.rerun()
 
     with col2:
         st.subheader("Segment Management")
 
         segment_name = st.text_input(
-            "Segment Name", placeholder="e.g., car_body", key="segment_name"
+            "Segment Name", placeholder="e.g., car_body", key="segment_name_widget"
         )
         epsilon_factor = st.slider(
             "Vectorization Simplification (epsilon)",
@@ -204,15 +206,15 @@ if uploaded_file is not None:
                         st.session_state.original_svg,
                         path_d,
                         segment_name,
-                        fill_color="#FF0000",
-                        opacity=0.5,
+                        fill_color="transparent",
+                        opacity=0.0,
                     )
 
                     # Clear current selection for the next segment
                     st.session_state.points = []
                     st.session_state.labels = []
                     st.session_state.current_mask = None
-                    st.session_state.segment_name = ""
+                    st.session_state.segment_name_widget = ""
 
                     st.success(f"Segment '{segment_name}' saved!")
                     st.rerun()
