@@ -1,12 +1,39 @@
 from lxml import etree
 import cairosvg
 import io
+import base64
 from PIL import Image
 from typing import Any
 
 # Namespace for SVG creation
 SVG_NS = "http://www.w3.org/2000/svg"
-NSMAP = {None: SVG_NS}
+XLINK_NS = "http://www.w3.org/1999/xlink"
+NSMAP = {None: SVG_NS, "xlink": XLINK_NS}
+
+
+def create_svg_with_image(image: Image.Image) -> str:
+    """Creates a basic SVG string with the given raster image embedded via base64."""
+    width, height = image.size
+    root = etree.Element(
+        "svg",
+        width=str(width),
+        height=str(height),
+        viewBox=f"0 0 {width} {height}",
+        nsmap=NSMAP,
+    )
+
+    # Convert image to base64
+    buffered = io.BytesIO()
+    image.save(buffered, format="PNG")
+    img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
+
+    image_elem = etree.SubElement(
+        root, f"{{{SVG_NS}}}image", width=str(width), height=str(height)
+    )
+    image_elem.set("href", f"data:image/png;base64,{img_str}")
+    image_elem.set(f"{{{XLINK_NS}}}href", f"data:image/png;base64,{img_str}")
+
+    return etree.tostring(root, pretty_print=True, encoding="unicode")
 
 
 def create_base_svg(width: int, height: int) -> str:
@@ -61,6 +88,10 @@ def add_path_to_svg(
     group = etree.SubElement(
         root, f"{{{ns}}}g" if ns else "g", id=path_id, nsmap=new_nsmap
     )
+
+    # Add <title> for tooltips (e.g., Apache eCharts interactivity)
+    title = etree.SubElement(group, f"{{{ns}}}title" if ns else "title")
+    title.text = path_id
 
     # Create the <path>
     # Using fill-rule="evenodd" is important when combining outer boundaries and inner holes
