@@ -57,6 +57,32 @@ def test_mask_to_svg_path_with_hole():
     assert path_str.count("Z") == 2
 
 
+def test_mask_to_svg_path_nested_holes():
+    # Test a mask with a nested hierarchy: outer square, inner hole, innermost square
+    mask = np.zeros((100, 100), dtype=np.uint8)
+    # Outer square
+    mask[10:90, 10:90] = 255
+    # Inner hole
+    mask[20:80, 20:80] = 0
+    # Innermost solid
+    mask[40:60, 40:60] = 255
+
+    paths = mask_to_svg_path(mask, epsilon_factor=0.001)
+
+    # We expect two "islands" (external contours):
+    # 1. The innermost solid (has no holes) -> 1 M, 1 Z
+    # 2. The outer square (has 1 hole) -> 2 M, 2 Z
+    assert len(paths) == 2
+
+    # Check the segments in the paths
+    m_counts = [path.count("M") for path in paths]
+    z_counts = [path.count("Z") for path in paths]
+
+    # One path should have 1 segment, the other should have 2 segments
+    assert sorted(m_counts) == [1, 2]
+    assert sorted(z_counts) == [1, 2]
+
+
 def test_mask_to_svg_path_simplification():
     # Create a noisy/jagged circle
     mask = np.zeros((200, 200), dtype=np.uint8)
