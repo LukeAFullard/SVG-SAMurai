@@ -3,7 +3,7 @@ import cairosvg
 import io
 import base64
 from PIL import Image
-from typing import Any
+from typing import Any, List, Optional, Union
 
 # Namespace for SVG creation
 SVG_NS = "http://www.w3.org/2000/svg"
@@ -47,8 +47,6 @@ def create_base_svg(width: int, height: int) -> str:
     )
     return etree.tostring(root, pretty_print=True, encoding="unicode")
 
-
-from typing import Union, List, Optional
 
 def add_path_to_svg(
     svg_str: str,
