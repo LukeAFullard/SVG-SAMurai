@@ -1,11 +1,9 @@
 import cv2
 import numpy as np
-from typing import List, Union, Optional
+from typing import List, Optional
 
 
-def mask_to_svg_path(
-    mask: np.ndarray, epsilon_factor: float = 0.005
-) -> List[str]:
+def mask_to_svg_path(mask: np.ndarray, epsilon_factor: float = 0.005) -> List[str]:
     """
     Converts a binary mask to SVG path strings, grouping holes with their parent boundaries.
 
@@ -55,9 +53,7 @@ def mask_to_svg_path(
             # We follow the 'First_Child' then 'Next' pointers.
             hole_idx = hierarchy[i][2]
             while hole_idx != -1:
-                hole_path = _contour_to_path_segment(
-                    contours[hole_idx], epsilon_factor
-                )
+                hole_path = _contour_to_path_segment(contours[hole_idx], epsilon_factor)
                 if hole_path:
                     island_segments.append(hole_path)
                 hole_idx = hierarchy[hole_idx][0]  # Move to next hole at same level

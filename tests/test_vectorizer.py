@@ -98,3 +98,24 @@ def test_mask_to_svg_path_hierarchy_none(mocker):
 
     paths = mask_to_svg_path(mask)
     assert paths == [], "Should return empty list when hierarchy is None"
+
+
+def test_mask_to_svg_path_extreme_epsilon():
+    # Test with extreme epsilon factors (0.0 and very large) using an existing mask fixture approach
+    # We can use a simple square or circle pattern similar to what's done in other tests
+    mask = np.zeros((100, 100), dtype=np.uint8)
+    # Draw a 50x50 square in the center, same as test_mask_to_svg_path_simple_square
+    mask[25:75, 25:75] = 255
+
+    # Epsilon factor 0.0 means no simplification
+    paths_zero = mask_to_svg_path(mask, epsilon_factor=0.0)
+    assert len(paths_zero) == 1
+    # For a square with 0.0 simplification, the number of L commands shouldn't be zero
+    assert paths_zero[0].count("L") >= 3
+
+    # Extremely high epsilon factor should simplify the contour so much
+    # that it becomes less than 3 points, thus returning an empty list
+    paths_huge = mask_to_svg_path(mask, epsilon_factor=100.0)
+    assert paths_huge == [], (
+        "Extremely high epsilon should over-simplify and return no paths"
+    )
