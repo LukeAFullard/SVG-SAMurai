@@ -1,4 +1,5 @@
 import streamlit as st
+import html
 from PIL import Image
 import numpy as np
 from streamlit_image_coordinates import streamlit_image_coordinates
@@ -216,7 +217,7 @@ if uploaded_file is not None:
                     st.session_state.current_mask = None
                     st.session_state.segment_name_widget = ""
 
-                    st.success(f"Segment '{segment_name}' saved!")
+                    st.success(f"Segment '{html.escape(segment_name)}' saved!")
                     st.rerun()
                 except Exception as e:
                     st.error(f"Failed to inject SVG: {e}")
@@ -225,7 +226,7 @@ if uploaded_file is not None:
         if st.session_state.segments:
             st.write("### Saved Segments")
             for name in st.session_state.segments.keys():
-                st.markdown(f"- **{name}**")
+                st.markdown(f"- **{html.escape(name)}**")
 
             # Provide download button for the final SVG
             st.download_button(
