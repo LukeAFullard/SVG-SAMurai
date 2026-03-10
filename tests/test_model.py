@@ -102,3 +102,36 @@ def test_predict_mask(mock_sam_components):
 
     # Since we mocked the output to be all ones, the scaled mask should be all 255s
     assert np.all(mask == 255)
+
+
+def test_predict_mask_negative_label(mock_sam_components):
+    """Test that predict_mask handles negative labels (0) correctly."""
+    mock_load, mock_model, mock_processor = mock_sam_components
+
+    # Dummy inputs
+    image = Image.new("RGB", (100, 100), color="white")
+    image_embeddings = torch.zeros((1, 256, 64, 64))
+    input_points = [[50, 50]]
+    input_labels = [0]  # Negative label
+
+    # Run prediction
+    mask = predict_mask(image, image_embeddings, input_points, input_labels)
+
+    # Assertions
+    mock_load.assert_called_once()
+
+    # The processor should be called with input_points and input_labels
+    _, kwargs = mock_processor.call_args
+    assert "input_points" in kwargs
+    assert kwargs["input_points"] == [input_points]
+    assert kwargs["input_labels"] == [input_labels]
+
+    # The mask should be a numpy array of uint8
+    assert isinstance(mask, np.ndarray)
+    assert mask.dtype == np.uint8
+    assert mask.shape == (100, 100)
+
+    # Even with a negative point, it should return the mask if it's the only point
+    # provided (though usually you'd have at least one positive point).
+    # Based on the implementation, if no positive points are found, it returns the raw mask.
+    assert np.all(mask == 255)
