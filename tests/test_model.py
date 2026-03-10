@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 from PIL import Image
 import torch
-from src.model import compute_image_embedding, predict_mask
+from src.model import compute_image_embedding, predict_mask, load_sam_model
 
 
 @pytest.fixture
@@ -51,6 +51,46 @@ def mock_sam_components():
         mock_load.return_value = (mock_model, mock_processor, mock_device)
 
         yield mock_load, mock_model, mock_processor
+
+
+def test_load_sam_model_cuda_available():
+    """Test load_sam_model initializes with CUDA when available."""
+    # Clear streamlit cache before testing
+    load_sam_model.clear()
+
+    with patch("src.model.torch.cuda.is_available", return_value=True), \
+         patch("src.model.SamModel.from_pretrained") as mock_model_from_pretrained, \
+         patch("src.model.SamProcessor.from_pretrained") as mock_processor_from_pretrained:
+
+        mock_model = MagicMock()
+        mock_model_from_pretrained.return_value = mock_model
+
+        model, processor, device = load_sam_model()
+
+        mock_model_from_pretrained.assert_called_once_with("facebook/sam-vit-base")
+        mock_model.to.assert_called_once_with("cuda")
+        mock_processor_from_pretrained.assert_called_once_with("facebook/sam-vit-base")
+        assert device == "cuda"
+
+
+def test_load_sam_model_cpu_available():
+    """Test load_sam_model initializes with CPU when CUDA is not available."""
+    # Clear streamlit cache before testing
+    load_sam_model.clear()
+
+    with patch("src.model.torch.cuda.is_available", return_value=False), \
+         patch("src.model.SamModel.from_pretrained") as mock_model_from_pretrained, \
+         patch("src.model.SamProcessor.from_pretrained") as mock_processor_from_pretrained:
+
+        mock_model = MagicMock()
+        mock_model_from_pretrained.return_value = mock_model
+
+        model, processor, device = load_sam_model()
+
+        mock_model_from_pretrained.assert_called_once_with("facebook/sam-vit-base")
+        mock_model.to.assert_called_once_with("cpu")
+        mock_processor_from_pretrained.assert_called_once_with("facebook/sam-vit-base")
+        assert device == "cpu"
 
 
 def test_compute_image_embedding(mock_sam_components):
