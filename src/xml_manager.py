@@ -4,6 +4,7 @@ import io
 import base64
 from PIL import Image
 from typing import Any, List, Optional, Union
+import re
 
 # Namespace for SVG creation
 SVG_NS = "http://www.w3.org/2000/svg"
@@ -48,6 +49,21 @@ def create_base_svg(width: int, height: int) -> str:
     return etree.tostring(root, pretty_print=True, encoding="unicode")
 
 
+def sanitize_id(id_str: str) -> str:
+    """Sanitizes a string to ensure it is a safe and valid XML ID.
+    Replaces all invalid characters with an underscore.
+    Ensures the ID does not start with a number or hyphen.
+    """
+    # Replace anything that isn't alphanumeric, hyphen, or underscore with an underscore
+    safe_id = re.sub(r"[^a-zA-Z0-9_\-]", "_", id_str)
+
+    # XML IDs must not start with a number, hyphen, or dot
+    if re.match(r"^[\d\-]", safe_id):
+        safe_id = "id_" + safe_id
+
+    return safe_id if safe_id else "id_empty"
+
+
 def add_path_to_svg(
     svg_str: str,
     path_d: Union[str, List[str]],
@@ -61,6 +77,8 @@ def add_path_to_svg(
     """
     if not path_d:
         return svg_str
+
+    safe_path_id = sanitize_id(path_id)
 
     try:
         # Provide a parser that handles basic errors and mitigates XXE injection securely
@@ -85,9 +103,9 @@ def add_path_to_svg(
     # Ensure xmlns is explicitly available in nsmap of new elements
     new_nsmap = {None: ns} if ns else None
 
-    # Create the <g id="path_id">
+    # Create the <g id="safe_path_id">
     group = etree.SubElement(
-        root, f"{{{ns}}}g" if ns else "g", id=path_id, nsmap=new_nsmap
+        root, f"{{{ns}}}g" if ns else "g", id=safe_path_id, nsmap=new_nsmap
     )
 
     # Add <title> for tooltips (e.g., Apache eCharts interactivity)

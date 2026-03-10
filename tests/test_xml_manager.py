@@ -16,6 +16,17 @@ def test_create_base_svg():
     assert root.attrib["viewBox"] == "0 0 800 600"
 
 
+def test_sanitize_id():
+    from src.xml_manager import sanitize_id
+
+    assert sanitize_id("valid_id") == "valid_id"
+    assert sanitize_id("invalid character") == "invalid_character"
+    assert sanitize_id('"><script>alert(1)</script>') == "___script_alert_1___script_"
+    assert sanitize_id("123starts_with_number") == "id_123starts_with_number"
+    assert sanitize_id("-starts_with_hyphen") == "id_-starts_with_hyphen"
+    assert sanitize_id("") == "id_empty"
+
+
 def test_add_path_to_svg():
     svg_str = create_base_svg(100, 100)
     path_d = "M 0,0 L 100,0 L 100,100 L 0,100 Z"
