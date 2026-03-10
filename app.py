@@ -5,7 +5,7 @@ from streamlit_image_coordinates import streamlit_image_coordinates
 
 from src.model import compute_image_embedding, predict_mask
 from src.vectorizer import mask_to_svg_path
-from src.xml_manager import load_image, create_svg_with_image
+from src.xml_manager import load_image, create_svg_with_image, add_path_to_svg
 
 st.set_page_config(page_title="SVG-SAMurai", layout="wide", page_icon="🗡️")
 
@@ -199,8 +199,6 @@ if uploaded_file is not None:
                 st.session_state.segments[segment_name] = path_d
 
                 # 3. Inject the path into the working SVG string
-                from src.xml_manager import add_path_to_svg
-
                 try:
                     st.session_state.original_svg = add_path_to_svg(
                         st.session_state.original_svg,

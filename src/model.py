@@ -4,6 +4,7 @@ import streamlit as st
 import numpy as np
 from PIL import Image
 from typing import Tuple, List
+import cv2
 
 
 # Use @st.cache_resource to avoid reloading the model on every rerun
@@ -94,7 +95,6 @@ def predict_mask(
 
     # To prevent "overlap onto a different part of the image", keep only the connected
     # components of the mask that actually contain at least one positive input point.
-    import cv2
     num_labels, labels_img = cv2.connectedComponents(binary_mask)
     if num_labels > 1:
         # labels_img has values from 0 (background) to num_labels - 1
