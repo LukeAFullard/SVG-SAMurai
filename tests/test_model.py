@@ -175,3 +175,43 @@ def test_predict_mask_negative_label(mock_sam_components):
     # provided (though usually you'd have at least one positive point).
     # Based on the implementation, if no positive points are found, it returns the raw mask.
     assert np.all(mask == 255)
+
+@patch("src.model.cv2.connectedComponents")
+def test_predict_mask_fallback_no_positive_overlap(mock_connected_components, mock_sam_components):
+    """
+    Test that the fallback logic in predict_mask works correctly when positive
+    points do not overlap with any foreground mask component (e.g. they fall on the background, 0).
+    It should return the original mask.
+    """
+    mock_load, mock_model, mock_processor = mock_sam_components
+
+    # Dummy inputs
+    image = Image.new("RGB", (100, 100), color="white")
+    image_embeddings = torch.zeros((1, 256, 64, 64))
+    # Provide a positive point that we will make fall on the background
+    input_points = [[50, 50]]
+    input_labels = [1]  # Positive point
+
+    # Mock cv2.connectedComponents to return a multi-component mask
+    # where the point (50, 50) is on the background (0).
+    # We will just make a labels_img of all zeros, except maybe some other place is 1.
+    mock_labels_img = np.zeros((100, 100), dtype=np.int32)
+    # Give component 1 some other coordinates
+    mock_labels_img[0:10, 0:10] = 1
+
+    # Return 2 for num_labels (background + 1 component)
+    mock_connected_components.return_value = (2, mock_labels_img)
+
+    # Run prediction
+    mask = predict_mask(image, image_embeddings, input_points, input_labels)
+
+    # Since there are no positive points on component 1 (the point 50,50 is on 0),
+    # len(positive_points_labels) will be 0.
+    # The fallback should be to return the original binary mask.
+
+    # Based on mock_sam_components, the original mask (before connected components filter)
+    # is all 255s.
+    assert np.all(mask == 255)
+
+    # Assert that connectedComponents was called
+    mock_connected_components.assert_called_once()
